@@ -19,7 +19,14 @@ import {
   Activity,
   Star,
   Upload,
-  CreditCard
+  CreditCard,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle2,
+  Navigation,
+  ExternalLink,
+  Copy,
+  Check
 } from 'lucide-react';
 
 export default function Home() {
@@ -46,6 +53,14 @@ export default function Home() {
   const [trackedBooking, setTrackedBooking] = useState<any>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
+  // FAQ State
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  // Copy Address State
+  const [copied, setCopied] = useState(false);
+
+  const addressText = 'Ketuma Health Centre, In front of Holeta Administration, Holeta, Ethiopia';
+
   // Doctor Data
   const doctors = [
     { name: 'Dr. Ketema Moti', role: 'Chief Medical Officer', dept: 'General Checkup', exp: '12+ Years', availability: 'Mon - Fri' },
@@ -59,6 +74,14 @@ export default function Home() {
     { title: 'General Outpatient', desc: 'Routine health checkups, diagnostic testing, and consultations.', icon: Stethoscope },
     { title: 'Pediatric Care', desc: 'Specialized healthcare for infants, children, and adolescents.', icon: Heart },
     { title: 'Internal Medicine', desc: 'Comprehensive diagnosis and treatment of complex adult illnesses.', icon: Shield },
+  ];
+
+  // FAQ Data
+  const faqs = [
+    { q: 'How much is the registration fee?', a: 'The initial consultation registration fee is 500 ETB, payable via Telebirr or CBE Birr before or during booking.' },
+    { q: 'Do I need an appointment for emergency triage?', a: 'No, emergencies are handled immediately 24/7. Use our AI Triage or call 0923055713 directly.' },
+    { q: 'What should I bring for my appointment?', a: 'Please bring a valid ID card, your payment receipt (if prepaid), and any prior medical records/prescriptions.' },
+    { q: 'How do I track my booking status?', a: 'Go to the "Track Booking" tab on this website and enter the phone number used during registration.' },
   ];
 
   const handleChatSubmit = async (e: React.FormEvent) => {
@@ -108,6 +131,12 @@ export default function Home() {
     }
   };
 
+  const copyAddressToClipboard = () => {
+    navigator.clipboard.writeText(addressText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col justify-between font-sans relative">
       {/* Top Bar */}
@@ -122,7 +151,7 @@ export default function Home() {
             <span>0923055713</span>
           </a>
           <span className="hidden md:inline-flex items-center space-x-1 text-emerald-300">
-            <Clock className="w-4 h-4 mr-1" /> 24/7 Triage Support
+            <Clock className="w-4 h-4 mr-1" /> Open 24/7
           </span>
         </div>
       </div>
@@ -228,6 +257,79 @@ export default function Home() {
               </div>
             </div>
 
+            {/* INTERACTIVE LOCATION & MAP CARD */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <div>
+                  <h4 className="text-md font-bold text-slate-900 flex items-center space-x-2">
+                    <MapPin className="w-5 h-5 text-emerald-600" />
+                    <span>Clinic Location & Directions</span>
+                  </h4>
+                  <p className="text-xs text-slate-500">Visit us in person or get live directions on your phone.</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={copyAddressToClipboard}
+                    className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium transition"
+                  >
+                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-500" />}
+                    <span>{copied ? 'Address Copied!' : 'Copy Address'}</span>
+                  </button>
+                  <a
+                    href="https://www.google.com/maps/search/?api=1&query=Holeta+Administration+Ethiopia"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition"
+                  >
+                    <Navigation className="w-3.5 h-3.5" />
+                    <span>Get Directions</span>
+                    <ExternalLink className="w-3 h-3 ml-0.5" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Embedded Interactive Google Map */}
+              <div className="relative w-full h-64 rounded-xl overflow-hidden border border-slate-200 shadow-inner">
+                <iframe
+                  title="Ketuma Health Centre Location Map"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  allowFullScreen
+                  src="https://maps.google.com/maps?q=Holeta%20Ethiopia&t=&z=14&ie=UTF8&iwloc=&output=embed"
+                ></iframe>
+              </div>
+
+              <div className="grid sm:grid-cols-3 gap-3 text-xs pt-1">
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <p className="font-bold text-slate-900 mb-0.5">Physical Address</p>
+                  <p className="text-slate-600">In front of Holeta Administration, Holeta, Ethiopia</p>
+                </div>
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <p className="font-bold text-slate-900 mb-0.5">Operating Hours</p>
+                  <p className="text-slate-600">Open 24/7 (Emergency & AI Triage)</p>
+                </div>
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <p className="font-bold text-slate-900 mb-0.5">Contact Line</p>
+                  <a href="tel:0923055713" className="text-emerald-700 font-semibold hover:underline">0923055713</a>
+                </div>
+              </div>
+            </div>
+
+            {/* Pre-Visit Checkbox Guidance */}
+            <div className="bg-emerald-50 border border-emerald-200 p-5 rounded-2xl space-y-3">
+              <h4 className="text-sm font-bold text-emerald-900 flex items-center space-x-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>Patient Preparation Guidelines</span>
+              </h4>
+              <ul className="text-xs text-emerald-800 space-y-1.5 list-disc list-inside">
+                <li>Arrive at least 15 minutes before your booked time slot.</li>
+                <li>Bring a valid photo identification card (Kebele ID, Passport, or Driver License).</li>
+                <li>Have your 500 ETB payment transaction screenshot ready for verification at reception.</li>
+              </ul>
+            </div>
+
             {/* Testimonial Block */}
             <div className="bg-gradient-to-r from-emerald-800 to-teal-900 text-white rounded-3xl p-6 shadow-md space-y-3">
               <div className="flex items-center space-x-1 text-amber-400">
@@ -239,6 +341,29 @@ export default function Home() {
                 &ldquo;The AI symptom checker guided me immediately before I arrived, and Dr. Sarah had my info ready. Exceptional care at Ketuma Health Centre!&rdquo;
               </p>
               <p className="text-xs font-semibold text-emerald-300">— Verified Patient Review</p>
+            </div>
+
+            {/* FAQ Accordion Section */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+              <h4 className="text-md font-bold text-slate-900">Frequently Asked Questions (FAQ)</h4>
+              <div className="space-y-3">
+                {faqs.map((faq, index) => (
+                  <div key={index} className="border border-slate-200 rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                      className="w-full text-left p-3.5 bg-slate-50 hover:bg-slate-100 transition flex justify-between items-center text-xs sm:text-sm font-semibold text-slate-800"
+                    >
+                      <span>{faq.q}</span>
+                      {openFaq === index ? <ChevronUp className="w-4 h-4 text-emerald-600" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                    </button>
+                    {openFaq === index && (
+                      <div className="p-3.5 bg-white text-xs text-slate-600 border-t border-slate-100 leading-relaxed">
+                        {faq.a}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
