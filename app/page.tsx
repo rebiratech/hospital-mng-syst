@@ -21,7 +21,8 @@ import {
 } from 'lucide-react';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'info' | 'triage' | 'reservation' | 'doctors' | 'tracker'>('triage');
+  // Default to 'info' so Services & About is the first view when opening the site
+  const [activeTab, setActiveTab] = useState<'info' | 'triage' | 'reservation' | 'doctors' | 'tracker'>('info');
 
   // AI Chat State
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([
@@ -35,6 +36,7 @@ export default function Home() {
 
   // Reservation State
   const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({ name: '', phone: '', date: '', department: 'General Checkup', doctor: 'Any Available' });
 
   // Tracker State
@@ -42,9 +44,9 @@ export default function Home() {
   const [trackedBooking, setTrackedBooking] = useState<any>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
-  // Doctor Data
+  // Doctor Data (Updated Dr. Abebe Bikila to Dr. Ketema Moti)
   const doctors = [
-    { name: 'Dr. Abebe Bikila', role: 'Chief Medical Officer', dept: 'General Checkup', exp: '12+ Years', availability: 'Mon - Fri' },
+    { name: 'Dr. Ketema Moti', role: 'Chief Medical Officer', dept: 'General Checkup', exp: '12+ Years', availability: 'Mon - Fri' },
     { name: 'Dr. Sarah Tadesse', role: 'Pediatric Specialist', dept: 'Pediatrics', exp: '8 Years', availability: 'Mon - Sat' },
     { name: 'Dr. Dawit Solomon', role: 'Internal Medicine', dept: 'Internal Medicine', exp: '10 Years', availability: 'Tue - Sun' },
   ];
@@ -333,7 +335,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* TAB 4: RESERVATION PAGE WITH NETLIFY FORM */}
+        {/* TAB 4: RESERVATION PAGE (DIRECT EMAIL TO YOU) */}
         {activeTab === 'reservation' && (
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-md max-w-lg mx-auto">
             <h3 className="text-xl font-bold text-slate-900 mb-1">Book an Appointment</h3>
@@ -343,7 +345,7 @@ export default function Home() {
               <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-emerald-800 text-sm space-y-2">
                 <p className="font-bold">Reservation Submitted!</p>
                 <p>
-                  Thank you, {formData.name}. Your details have been sent to our reception team. We will contact you at {formData.phone} shortly.
+                  Thank you, {formData.name}. Your details have been emailed directly to our reception team. We will contact you at {formData.phone} shortly.
                 </p>
                 <button onClick={() => setBookingSuccess(false)} className="text-xs font-semibold text-emerald-700 underline mt-2 block">
                   Book another appointment
@@ -351,41 +353,52 @@ export default function Home() {
               </div>
             ) : (
               <form
-                name="appointments"
-                method="POST"
-                data-netlify="true"
                 onSubmit={async (e) => {
                   e.preventDefault();
-                  const body = new URLSearchParams({
-                    'form-name': 'appointments',
-                    ...formData,
-                  }).toString();
+                  setSubmitting(true);
 
                   try {
-                    await fetch('/', {
+                    const res = await fetch('https://api.web3forms.com/submit', {
                       method: 'POST',
-                      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                      body,
+                      headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                      },
+                      body: JSON.stringify({
+                        access_key: 'a74437c0-1e50-4d8a-818d-2c505f800e08',
+                        subject: `New Appointment Request: ${formData.name}`,
+                        from_name: 'Ketuma Health Centre Portal',
+                        name: formData.name,
+                        phone: formData.phone,
+                        date: formData.date,
+                        department: formData.department,
+                        doctor: formData.doctor,
+                      }),
                     });
-                    setBookingSuccess(true);
+
+                    const result = await res.json();
+                    if (result.success) {
+                      setBookingSuccess(true);
+                    } else {
+                      alert('Failed to send appointment request. Please call 0923055713.');
+                    }
                   } catch (err) {
-                    alert('Failed to submit reservation. Please call 0923055713.');
+                    alert('Error submitting appointment. Please call 0923055713.');
+                  } finally {
+                    setSubmitting(false);
                   }
                 }}
                 className="space-y-4 text-sm"
               >
-                <input type="hidden" name="form-name" value="appointments" />
-
                 <div>
                   <label className="block text-slate-700 font-medium mb-1">Full Name</label>
                   <input
                     type="text"
-                    name="name"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Enter full name"
-                    className="w-full px-4 py-2 bg-slate-100 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-4 py-2 bg-slate-100 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800"
                   />
                 </div>
 
@@ -393,12 +406,11 @@ export default function Home() {
                   <label className="block text-slate-700 font-medium mb-1">Phone Number</label>
                   <input
                     type="tel"
-                    name="phone"
                     required
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="e.g. 0923055713"
-                    className="w-full px-4 py-2 bg-slate-100 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-4 py-2 bg-slate-100 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800"
                   />
                 </div>
 
@@ -406,21 +418,19 @@ export default function Home() {
                   <label className="block text-slate-700 font-medium mb-1">Preferred Date</label>
                   <input
                     type="date"
-                    name="date"
                     required
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    className="w-full px-4 py-2 bg-slate-100 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-4 py-2 bg-slate-100 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800"
                   />
                 </div>
 
                 <div>
                   <label className="block text-slate-700 font-medium mb-1">Department</label>
                   <select
-                    name="department"
                     value={formData.department}
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    className="w-full px-4 py-2 bg-slate-100 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-4 py-2 bg-slate-100 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800"
                   >
                     <option value="General Checkup">General Checkup</option>
                     <option value="Pediatrics">Pediatrics</option>
@@ -429,8 +439,12 @@ export default function Home() {
                   </select>
                 </div>
 
-                <button type="submit" className="w-full bg-emerald-600 text-white font-semibold py-2.5 rounded-xl hover:bg-emerald-700 transition">
-                  Confirm Reservation
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full bg-emerald-600 text-white font-semibold py-2.5 rounded-xl hover:bg-emerald-700 transition disabled:opacity-50"
+                >
+                  {submitting ? 'Sending Request...' : 'Confirm Reservation'}
                 </button>
               </form>
             )}
@@ -452,7 +466,7 @@ export default function Home() {
                 value={searchPhone}
                 onChange={(e) => setSearchPhone(e.target.value)}
                 placeholder="Enter phone number (0923055713)"
-                className="flex-1 px-4 py-2 bg-slate-100 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="flex-1 px-4 py-2 bg-slate-100 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800"
               />
               <button type="submit" className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-700 transition">
                 Search
