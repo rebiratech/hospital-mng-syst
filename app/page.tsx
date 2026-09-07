@@ -17,11 +17,12 @@ import {
   Search,
   Stethoscope,
   Activity,
-  Star
+  Star,
+  Upload,
+  CreditCard
 } from 'lucide-react';
 
 export default function Home() {
-  // Default to 'info' so Services & About is the first view when opening the site
   const [activeTab, setActiveTab] = useState<'info' | 'triage' | 'reservation' | 'doctors' | 'tracker'>('info');
 
   // AI Chat State
@@ -37,14 +38,15 @@ export default function Home() {
   // Reservation State
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState({ name: '', phone: '', date: '', department: 'General Checkup', doctor: 'Any Available' });
+  const [formData, setFormData] = useState({ name: '', phone: '', date: '', department: 'General Checkup', doctor: 'Any Available', paymentRef: '' });
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
 
   // Tracker State
   const [searchPhone, setSearchPhone] = useState('');
   const [trackedBooking, setTrackedBooking] = useState<any>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
-  // Doctor Data (Updated Dr. Abebe Bikila to Dr. Ketema Moti)
+  // Doctor Data
   const doctors = [
     { name: 'Dr. Ketema Moti', role: 'Chief Medical Officer', dept: 'General Checkup', exp: '12+ Years', availability: 'Mon - Fri' },
     { name: 'Dr. Sarah Tadesse', role: 'Pediatric Specialist', dept: 'Pediatrics', exp: '8 Years', availability: 'Mon - Sat' },
@@ -335,17 +337,32 @@ export default function Home() {
           </div>
         )}
 
-        {/* TAB 4: RESERVATION PAGE (DIRECT EMAIL TO YOU) */}
+        {/* TAB 4: RESERVATION PAGE (WITH 500 ETB FEE & RECEIPT UPLOAD) */}
         {activeTab === 'reservation' && (
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-md max-w-lg mx-auto">
             <h3 className="text-xl font-bold text-slate-900 mb-1">Book an Appointment</h3>
-            <p className="text-xs text-slate-500 mb-6">Schedule your clinical visit with Ketuma Health Centre.</p>
+            <p className="text-xs text-slate-500 mb-4">Schedule your clinical visit with Ketuma Health Centre.</p>
+
+            {/* Payment Guide Box */}
+            <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-xs space-y-2 mb-6">
+              <div className="flex items-center space-x-2 text-emerald-800 font-bold">
+                <CreditCard className="w-4 h-4 text-emerald-600" />
+                <span>Registration Payment Details</span>
+              </div>
+              <p className="text-slate-600">
+                Please transfer the consultation registration fee (<span className="font-bold text-slate-900">500 ETB</span>) to our official account and upload your receipt screenshot below:
+              </p>
+              <div className="bg-white p-2.5 rounded-lg border border-slate-200 font-mono text-slate-800 text-[11px] space-y-1">
+                <p><span className="font-bold text-emerald-700">Telebirr:</span> 0923055713 (Ketuma Health)</p>
+                <p><span className="font-bold text-blue-700">CBE Account:</span> 1000123456789</p>
+              </div>
+            </div>
 
             {bookingSuccess ? (
               <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-emerald-800 text-sm space-y-2">
-                <p className="font-bold">Reservation Submitted!</p>
+                <p className="font-bold">Reservation & Receipt Submitted!</p>
                 <p>
-                  Thank you, {formData.name}. Your details have been emailed directly to our reception team. We will contact you at {formData.phone} shortly.
+                  Thank you, {formData.name}. Your booking details and 500 ETB registration payment receipt have been sent to our desk. We will confirm your visit at {formData.phone} shortly.
                 </p>
                 <button onClick={() => setBookingSuccess(false)} className="text-xs font-semibold text-emerald-700 underline mt-2 block">
                   Book another appointment
@@ -366,13 +383,15 @@ export default function Home() {
                       },
                       body: JSON.stringify({
                         access_key: 'a74437c0-1e50-4d8a-818d-2c505f800e08',
-                        subject: `New Appointment Request: ${formData.name}`,
+                        subject: `New 500 ETB Paid Appointment: ${formData.name}`,
                         from_name: 'Ketuma Health Centre Portal',
                         name: formData.name,
                         phone: formData.phone,
                         date: formData.date,
                         department: formData.department,
                         doctor: formData.doctor,
+                        transaction_ref: formData.paymentRef || 'Receipt Uploaded',
+                        receipt_file_name: receiptFile ? receiptFile.name : 'No file attached',
                       }),
                     });
 
@@ -439,12 +458,47 @@ export default function Home() {
                   </select>
                 </div>
 
+                <div>
+                  <label className="block text-slate-700 font-medium mb-1">Transaction Ref / Txn ID (Optional)</label>
+                  <input
+                    type="text"
+                    value={formData.paymentRef}
+                    onChange={(e) => setFormData({ ...formData, paymentRef: e.target.value })}
+                    placeholder="e.g. Telebirr Txn ID: 7AB839"
+                    className="w-full px-4 py-2 bg-slate-100 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800"
+                  />
+                </div>
+
+                {/* Upload Receipt Ticket Photo */}
+                <div>
+                  <label className="block text-slate-700 font-medium mb-1">Upload Payment Ticket / Screenshot</label>
+                  <div className="relative border-2 border-dashed border-slate-300 hover:border-emerald-500 bg-slate-50 p-4 rounded-xl text-center cursor-pointer transition">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setReceiptFile(e.target.files[0]);
+                        }
+                      }}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    <div className="flex flex-col items-center justify-center space-y-1">
+                      <Upload className="w-5 h-5 text-emerald-600" />
+                      <span className="text-xs text-slate-600 font-medium">
+                        {receiptFile ? `Attached: ${receiptFile.name}` : 'Click or drop transaction screenshot'}
+                      </span>
+                      <span className="text-[10px] text-slate-400">PNG, JPG, or PDF up to 5MB</span>
+                    </div>
+                  </div>
+                </div>
+
                 <button
                   type="submit"
                   disabled={submitting}
                   className="w-full bg-emerald-600 text-white font-semibold py-2.5 rounded-xl hover:bg-emerald-700 transition disabled:opacity-50"
                 >
-                  {submitting ? 'Sending Request...' : 'Confirm Reservation'}
+                  {submitting ? 'Sending Request...' : 'Confirm Reservation & Receipt'}
                 </button>
               </form>
             )}
